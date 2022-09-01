@@ -1,0 +1,224 @@
+
+---
+author: Michael DeCrescenzo
+categories: [code, latex]
+title: |
+    Treating $\mathrm{\LaTeX}$ like a programming language:
+    the case of color-coded equations
+# subtitle: | "That's it. Every blog post gets its own repository" and other adventures
+# excerpt: |
+#     A blogdown website is more like a combination of modular components that are better managed independently, each component with its own repository.
+#     These modular components _come together_ at the nexus of the website, but the components do not _belong to_ the website.
+date: "2022-07-31"
+knitr:
+    opts_chunk:
+        collapse: true
+# draft: true
+# image: "git_featured.png"
+---
+
+$\newcommand{latex}{\mathrm{\LaTeX}}$
+
+$\latex$ can be a headache.
+The syntax is clunky.
+Normal usage leads us to engage with a lot of frustrating patterns.
+I see academics and other researchers [complain about it](https://twitter.com/RexDouglass/status/1551464194527989760), and I usually agree with where these complaints are coming from.
+
+But I also feel like many researchers don't get the most out of $\latex$.
+When I used to write more $\latex$ in graduate school, I knew I didn't.
+Sure, I was good at algorithmically injecting my output into papers, managing references, and so on.
+But the shoeleather work of $\latex$---itemizing and enumerating, managing the boilerplate code---wasn't something I was equipped to criticize with the same eye.
+I would repeat myself a lot in my code, get trapped inside of irritating design patterns, and felt the _age_ of the language all of the time.
+
+But you get older, you (hopefully) get better at programming, and you realize what you were being silly about.
+
+This blog post is about how _$\mathit{\LaTeX}$ is a programming language_ that you can do ordinary programming language things with.
+You can save variables and write functions.
+You can turn these tools into interfaces that let you work with greater efficiency.
+And you can design them in such a way that makes your work more joyful.
+
+We use as an example: color-coding an equation.
+
+## The uncomfortable color fundamentals in $\latex$
+
+Like many things in $\latex$, the built-in experience of color-control is pretty bad.
+You change your text color with `\color{}`, and naturally you pass some color argument.
+The language provides a few basic builtin color keywords like `red` and `blue`, which are pretty harsh, but others like `violent`, `teal`, and `maroon` are okay.
+The color options aren't the bad part though.
+You can load in extra colors, whatever, who cares.
+The bad part is the _interface_, which works like this.
+Any time you change a color, you change it basically _indefinitely_, at least up until $\latex$ encounters some scope change that causes the color to reset to normal.
+
+Here's some example $\latex$ code.
+
+```{latex}
+We start with some normal text.
+\color{red} And now the text is red indefinitely.
+```
+
+We can render this in the browser:[^mathtext]
+
+[^mathtext]: This is done by calling a `\text{}` environment within the math environment provided by MathJax or KaTeX or whichever I am running on this website...
+
+$$
+\text{
+    We start with some normal text. 
+    \color{red} And now the text is red indefinitely.
+}
+$$
+
+
+You may have seen similar behavior messing with text _size_.
+
+```{latex}
+We start with some normal text.
+\huge And now the text is huge indefinitely.
+```
+
+$$
+\text{
+    We start with some normal text. 
+    \huge And now the text is huge indefinitely.
+}
+$$
+
+Now, we can extert some control over the meaning of "indefinitely" by providing some scope, for instance with curly braces.
+
+```{latex}
+We start with some normal text. 
+{\color{red} But the} redness is {\color{red} contained}.
+```
+
+$$
+\text{
+    We start with some normal text. 
+    {\color{red} But the} redness is {\color{red} contained}.
+}
+$$
+
+This isn't _the worst_ but it doesn't feel too comfortable.
+It would be better if I could have written the last bit so it felt more like this.
+```latex
+\red{But the} redness is \red{contained}
+```
+which would save keystrokes and make the whole experience more declarative.
+
+
+## Doing better, with an equation example
+
+Let's say we have an example where we want to color-code different components of the equation.
+To be more specific, I want to _map_ certain semantic features of my document to specific colors in a consistent way.
+We would like the interface to be minimally burdensome, so I don't want to type (or _think_) a lot to get good effects.
+And we would also like it to be easy to modify at scale, so I can change the aesthetic mapping in the entire document without modifying a hundred individual instances in the code.
+Another way to say this is that the mapping should be reasonably _parameterized_.
+
+Let's introduce our equation and our "semantics".
+Let's say that we measure data on some individuals subscripted $i$, who are located within groups $g$, and measured across time units $t$.
+We measure some outcome $y_{it}$ which varies by individuals over groups and over time,
+\begin{align}
+    y_{it} &= \alpha + \mu_{i} + \gamma_{g[i]} + \tau_{t} + \varepsilon_{it}
+\end{align}
+where $\alpha$ is a constant or intercept, $\mu_{i}$ is a term that is fixed for an individual $i$ across repeated observations,
+$\gamma_{g[i]}$ is a group-specific that is fixed across time for all $i$ in group $g$,
+$\tau_{t}$ is a time-unit effect that is fixed for all individuals,
+and $\varepsilon_{it}$ is random error.
+These units of measurement---units, groups, time periods---are the "semantics" that we want to map to colors.
+
+We have already identified one problem: we don't want colors to apply indefinitely.
+This means that in order to turn "off" a color, I either have to explicitly call `\color{black}` again,
+or I have to wrap some expression in curly braces.
+Using the curly braces is definitely _safer_ (I don't want to assume that we always want to return to `black`),
+but managing the scope yourself is still fairly unpleasant if nothing else because it isn't how we write $\latex$ most of the time.
+I don't want to burden myself with patterns that feel unnatural.
+
+```{latex}
+% back to black
+y_{it} &= \alpha + \color{violet} \mu_{i} \color{black} 
+          + \gamma_{g[i]} + \tau_{t} + \varepsilon_{it} \\
+
+% use scope
+y_{it} &= \alpha + {\color{violet} \mu_{i}} 
+          + \gamma_{g[i]} + \tau_{t} + \varepsilon_{it}
+```
+
+\begin{align}
+    y_{it} &= \alpha + \color{violet} \mu_{i} \color{black} + \gamma_{g[i]} + \tau_{t} + \varepsilon_{it} \\
+    y_{it} &= \alpha + {\color{violet} \mu_{i}} + \gamma_{g[i]} + \tau_{t} + \varepsilon_{it}
+\end{align}
+
+So to improve things, we will introduce a function that, at first, will not feel like much of an improvement.
+But we discuss it to highlight both _how_ we can modify interfaces with pretty simple tools and _why_ we may want to do that.
+So, consider a function called `setcolor`, which takes two arguments: a color code and the text you want apply the color to locally.
+
+```{latex}
+% notice the extra {} braces
+\newcommand{\setcolor}[2]{ {\color{#1} {#2}} } 
+
+% apply function to the equation
+y_{it} &= \alpha + \setcolor{violet}{\mu_{i}} 
+          + \tau_{t} + \varepsilon_{it}
+```
+
+\begin{align}
+    \newcommand{\setcolor}[2]{ {\color{#1} {#2}} }
+    y_{it} &= \alpha + \setcolor{violet}{\mu_{i}} + \gamma_{g[i]} + \tau_{t} + \varepsilon_{it}
+\end{align}
+
+Why do I say that this function may not feel like much of an improvement?
+It has _some_ drawback: it really isn't any _"faster"_ to type `\setcolor{violent}{\mu_{i}}` than it is to type `{\color{violent} \mu_{i}}`.
+It actually has _more_ characters and just as many curly braces.
+But it is _better_ in at least two important respects that we should care about when we write code.
+One, we made the problem of locally scoping the color _inherent to the function_ instead of being procedurally managed _ad hoc_ outside of the function.
+This is good because it makes the whole thing more bug-proof.
+The other related upside is that the interface feels more naturally function-like:
+it is idiomatically friendly and familiar to achieve a result by calling a function with a predictable interface instead of managing special characters in the language as a separate concern.
+It is easier to remember one thing (use a function) than it is to remember two things (use a function _oh and also manage the weird scope_).
+So we get a friendlier interface that is also safer.
+Not bad!
+
+But we aren't done there.
+We make complete the interface by using this function to map semantics to colors directly.
+
+```{latex}
+\newcommand{unitfx}[1]{\setcolor{violet}{#1}}
+\newcommand{groupfx}[1]{\setcolor{green}{#1}}
+\newcommand{timefx}[1]{\setcolor{lightblue}{#1}}
+\newcommand{param}[1]{\setcolor{maroon}{#1}}
+```
+
+And as long as we do that in one place, all the hard work is done.
+Any downstream call to these functions is simple.
+Just wrap an expression in the equation inside of the function corresponding to its semantic.
+
+```{latex}
+y_{it} &= \param{\alpha} + \unitfx{\mu_{i}}
+          + \groupfx{\gamma_{g[i]}} + \timefx{\tau_{t}}
+          + \param{\varepsilon_{it}}
+```
+
+\begin{align}
+    \newcommand{unitfx}[1]{\setcolor{violet}{#1}}
+    \newcommand{groupfx}[1]{\setcolor{green}{#1}}
+    \newcommand{timefx}[1]{\setcolor{orange}{#1}}
+    \newcommand{param}[1]{\setcolor{maroon}{#1}}
+    y_{it} &= \param{\alpha} + \unitfx{\mu_{i}} + \groupfx{\gamma_{g[i]}} + \timefx{\tau_{t}} + \param{\varepsilon_{it}}
+\end{align}
+
+
+## Closing notes
+
+So that's it.
+Our solution meaningfully improves the color experience in $\latex$ using just 5 lines of code to create a helper function and a few color mappings.
+The helper function let us change the _interface_ to color control in the general case.
+And the color mappings let us apply the interface change to create simple key-value pairs from semantics to color-mappings.
+
+The interface is also safer because managing the scope of a color modification is more programmatic.
+
+We also do this without introducing any dependencies.
+We could still load outside packages to access more color values, but that choice doesn't bear on our interface or vice-versa.
+That's a good thing!
+
+And all because we treated a $\latex$ problem like a _programming_ problem.
+
+
+
