@@ -13,6 +13,7 @@ date: "2022-08-31"
 knitr:
     opts_chunk:
         collapse: true
+        eval: false
 draft: false
 # image: "git_featured.png"
 ---
