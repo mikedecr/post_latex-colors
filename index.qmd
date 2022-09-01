@@ -9,11 +9,11 @@ title: |
 # excerpt: |
 #     A blogdown website is more like a combination of modular components that are better managed independently, each component with its own repository.
 #     These modular components _come together_ at the nexus of the website, but the components do not _belong to_ the website.
-date: "2022-07-31"
+date: "2022-08-31"
 knitr:
     opts_chunk:
         collapse: true
-# draft: true
+draft: false
 # image: "git_featured.png"
 ---
 
