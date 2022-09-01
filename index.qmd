@@ -37,19 +37,21 @@ This blog post is about how _$\mathit{\LaTeX}$ is a programming language_ that y
 You can save variables and write functions.
 You can turn these tools into interfaces that let you work with greater efficiency.
 And you can design them in such a way that makes your work more joyful.
+This has been [on my mind](https://twitter.com/mikedecr/status/1559721156130881536) for a little while,
+but I worked up a quick exercise when [Jordan Nafa was talking about color-coding different parts of some equations](https://twitter.com/adamjnafa/status/1565164364981620737).
 
-We use as an example: color-coding an equation.
+So we will the broader problem of **color-coding an equation** as an example.
+
 
 ## The uncomfortable color fundamentals in $\latex$
 
-Like many things in $\latex$, the built-in experience of color-control is pretty bad.
+Like many things in $\latex$, the built-in experience of color-control is a little clunky.
 You change your text color with `\color{}`, and naturally you pass some color argument.
 The language provides a few basic builtin color keywords like `red` and `blue`, which are pretty harsh, but others like `violent`, `teal`, and `maroon` are okay.
-The color options aren't the bad part though.
-You can load in extra colors, whatever, who cares.
-The bad part is the _interface_, which works like this.
-Any time you change a color, you change it basically _indefinitely_, at least up until $\latex$ encounters some scope change that causes the color to reset to normal.
+The color options aren't the real frustration though (you can load in extra colors, whatever, who cares).
+The real frustration is the _interface_, which works like this.
 
+Any time you change a color, you change it basically _indefinitely_, at least up until $\latex$ encounters some scope change that causes the color to reset to normal.
 Here's some example $\latex$ code.
 
 ```{latex}
@@ -98,7 +100,7 @@ $$
 $$
 
 This isn't _the worst_ but it doesn't feel too comfortable.
-It would be better if I could have written the last bit so it felt more like this.
+It would feel better to control colors more like this:
 ```latex
 \red{But the} redness is \red{contained}
 ```
@@ -108,18 +110,17 @@ which would save keystrokes and make the whole experience more declarative.
 ## Doing better, with an equation example
 
 Let's say we have an example where we want to color-code different components of the equation.
-To be more specific, I want to _map_ certain semantic features of my document to specific colors in a consistent way.
+To be more specific, I want to _map_ certain semantic features of my document's content to specific colors in a consistent way.
 We would like the interface to be minimally burdensome, so I don't want to type (or _think_) a lot to get good effects.
-And we would also like it to be easy to modify at scale, so I can change the aesthetic mapping in the entire document without modifying a hundred individual instances in the code.
-Another way to say this is that the mapping should be reasonably _parameterized_.
 
-Let's introduce our equation and our "semantics".
-Let's say that we measure data on some individuals subscripted $i$, who are located within groups $g$, and measured across time units $t$.
-We measure some outcome $y_{it}$ which varies by individuals over groups and over time,
+Here are our equation and our "semantics".
+We collect data on some individuals subscripted $i$, who are located within groups $g$, and measured across time units $t$.
+We model some outcome $y_{it}$ as varying across individuals within groups and over time,
 \begin{align}
     y_{it} &= \alpha + \mu_{i} + \gamma_{g[i]} + \tau_{t} + \varepsilon_{it}
 \end{align}
-where $\alpha$ is a constant or intercept, $\mu_{i}$ is a term that is fixed for an individual $i$ across repeated observations,
+where $\alpha$ is a constant term,
+$\mu_{i}$ is a term that is fixed for an individual $i$ across repeated observations,
 $\gamma_{g[i]}$ is a group-specific that is fixed across time for all $i$ in group $g$,
 $\tau_{t}$ is a time-unit effect that is fixed for all individuals,
 and $\varepsilon_{it}$ is random error.
