@@ -196,7 +196,7 @@ We also throw in a generic `\param{}` function for other terms.
 ```{latex}
 \newcommand{unitfx}[1]{\setcolor{violet}{#1}}
 \newcommand{groupfx}[1]{\setcolor{green}{#1}}
-\newcommand{timefx}[1]{\setcolor{lightblue}{#1}}
+\newcommand{timefx}[1]{\setcolor{orange}{#1}}
 \newcommand{param}[1]{\setcolor{maroon}{#1}}
 ```
 
