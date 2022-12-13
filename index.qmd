@@ -22,38 +22,39 @@ $\newcommand{latex}{\mathrm{\LaTeX}}$
 
 $\latex$ can be a headache.
 The syntax is clunky.
-Normal usage leads us to engage with a lot of frustrating patterns.
-I see academics and other researchers complain about it, and I usually agree with where these complaints are coming from.
+What seems like "normal" usage requires a lot of frustrating patterns.
+I see academics and other researchers complain about it, and I usually agree with the spirit of the complaints.
 
-But I also feel like many researchers don't get the most out of $\latex$.
-When I used to write more $\latex$ in graduate school, I knew I didn't.
-I mean, I was _good_ at algorithmically injecting my statistical results into documents, managing citations and cross-references, and so on.
-But the shoeleather work of $\latex$---writing the boilerplate code to itemize and enumerate, control environments, typeset math---wasn't something I was equipped to criticize very confidently.
-I would end up repeating myself a lot in my code, getting trapped inside of irritating design patterns, and feeling the _age_ of the language constantly.
+But I don't always agree.
+I often feel like many researchers don't get the most out of $\latex$ (hereafter "LaTeX" or "TeX").
+When I used to write more LaTeX in graduate school, I knew I didn't.
+I mean, I was superficially _fine_ at it.
+I was capable of injecting statistical results into documents, managing citations and cross-references, and so on.
+But TeX requires a lot of shoeleather work---boilerplate code to itemize and enumerate, manage environments, typeset math---and I didn't know how to criticize that very well.
+Like many others, I would repeating my code a lot, get trapped in irritating patterns, and feel the _age_ of the language constantly.
 
 But you get older, you (hopefully) get better at programming, and you realize what you were being silly about.
-
-This blog post is about how _$\mathit{\LaTeX}$ is a programming language_.
+LaTeX is a programming language.
 You can do ordinary programming language things with it, like save variables and write functions.
-And then you can turn those variables and functions into interfaces that let you work with greater efficiency.
-And you can design those interfaces to make your work more joyful.
+And then you can turn those variables and functions into interfaces that let you work with nicer abstractions with greater efficiency.
+And these interfaces can make LaTeX more joyful.
 
-Thinking about programming challenges in $\latex$ has been [on my mind](https://twitter.com/mikedecr/status/1559721156130881536) for a little while,
-but I worked up a quick example when [Jordan Nafa was talking about color-coding different parts of some equations](https://twitter.com/adamjnafa/status/1565164364981620737).
+This has been [on my mind](https://twitter.com/mikedecr/status/1559721156130881536) for a little while,
+but recently I was talking with [Jordan Nafa about color-coding different parts of some equations](https://twitter.com/adamjnafa/status/1565164364981620737).
 So that will be our example for this post: **color-coding an equation**.
-This will not require deep $\latex$ expertise, knowledge of external packages, or other complicated tricks.
-We only have to a little ordinary programming thinking to turn $\latex$'s built-in color tools into something more practical and friendly.
+We require no deep LaTeX expertise, external packages, or complicated programming concepts.
+Just a little ordinary programming thinking to turn LaTeX's built-in color tools into something more practical and friendly.
 
 
-## Color fundamentals in $\latex$
+## Color fundamentals in LaTeX
 
-Like many things in $\latex$, the built-in experience of color-control is a little clunky.
-You change your text color with `\color{}`, and naturally you pass some color argument.
-The language provides a few builtin keywords like `red` and `blue`, which are harsh, but others like `violet`, `teal`, and `maroon` are fine.
+Like many things in LaTeX, the built-in experience of color-control is a little clunky.
+You can change text color with `\color{}`, which naturally takes some color argument.
+The language provides builtin keywords like `red` and `blue`, which are a bit harsh on the eyes, but others like `violet`, `teal`, and `maroon` are fine.
 But the color options aren't the problem.
 The problem is the interface, which works like this.
 
-Any time you change a color, you change it _indefinitely_, at least up until there is a scope change that bounds the application of the new color.
+Any time you change a color, you change it _indefinitely_ (up to some scope change, more on that in a second).
 Here is an example:
 
 ```{latex}
@@ -61,9 +62,7 @@ We start with some normal text.
 \color{red} And now the text is red indefinitely.
 ```
 
-We can render this in the browser:[^mathtext]
-
-[^mathtext]: This is done by calling a `\text{}` environment within the math environment provided by MathJax or KaTeX or whichever I am running on this website...
+When I render this in the browser:
 
 $$
 \text{
@@ -91,13 +90,13 @@ We can extert some control over the "indefinite" application of these settings b
 
 ```{latex}
 We start with some normal text. 
-{ \color{red} But the } redness is { \color{red} contained }.
+{ \color{red} But the } redness is { \color{red} contained inside curly braces}.
 ```
 
 $$
 \text{
-    We start with some normal text. 
-    {\color{red} But the} redness is {\color{red} contained}.
+We start with some normal text. 
+{ \color{red} But the } redness is { \color{red} contained inside curly braces}.
 }
 $$
 
@@ -106,18 +105,20 @@ It would feel better to control colors more like this:
 ```latex
 \red{But the} redness is \red{contained}
 ```
-which not only saves keystrokes but makes the whole experience feel more function-oriented and declarative.
+which makes the whole experience feel more intuitive, function-oriented and declarative.
 We will work toward something that feels similar (not identical) to this.
 
 
 ## Doing better, with an equation example
 
-Let's say we have an equation that has certain terms that we want to apply colors to.
-More specifically, we want to _map_ certain semantic features of the equation's meaning to specific colors in a consistent way.
-We would like the interface to be minimally burdensome. I don't want to have to type (or _think_) too much to get good effects.
+We will work with an example equation that has certain terms that we want make different colors.
+More specifically, we want to map certain "semantic features" of the equation to certain colors in a consistent way.
+And we would like the interface to be minimally burdensome; I don't want to have to type (or _think_) too much to get nice effects.
 
 Let's meet our equation and its "semantics".
-We collect data on some individuals subscripted $i$, who are located within groups $g$, and measured across time units $t$.
+By "semantics" I mean that the terms in the equation have some additional _meaning_ in addition to the math itself.
+In this example the semantics refer to the levels at which terms are indexed.
+We collect data on some _individuals_ subscripted $i$, who are located within _groups_ $g$, and measured across _time units_ subscripted $t$.
 We model some outcome $y_{it}$ as varying across individuals within groups and over time,
 \begin{align}
     y_{it} &= \alpha + \mu_{i} + \gamma_{g[i]} + \tau_{t} + \varepsilon_{it}
@@ -125,9 +126,9 @@ We model some outcome $y_{it}$ as varying across individuals within groups and o
 where $\alpha$ is a constant term,
 $\mu_{i}$ is a term that is fixed for an individual $i$ across repeated observations,
 $\gamma_{g[i]}$ is a group-specific that is fixed across time for all $i$ in group $g$,
-$\tau_{t}$ is a time-unit effect that is fixed for all individuals,
+$\tau_{t}$ is a time-unit effect that is fixed for all individuals.
 and $\varepsilon_{it}$ is random error.
-These units of measurement---units, groups, time periods---are the "semantics" that we want to map to colors.
+These units of measurement---units, groups, time periods---are the semantics that we want to map to colors.
 
 We have already identified one problem: we don't want colors to apply indefinitely.
 This means that in order to turn "off" a color, I either have to explicitly call `\color{black}` again,
@@ -150,7 +151,7 @@ y_{it} &= \alpha + {\color{violet} \mu_{i}}
 \end{align}
 
 Using the curly braces is definitely _safer_ than `\color{black}`; I don't want to assume that we always want to return to `black`.
-But managing the curly braces yourself can be cumbersome if you aren't used to writing $\latex$ that way already.
+But managing the curly braces yourself can be cumbersome if you aren't used to writing LaTeX that way already.
 I don't write with that style, so I don't want to burden myself with unusual patterns.[^lisp]
 
 [^lisp]: Although I could totally see, for example, Lisp users feeling quite comfortable with that style.
@@ -222,7 +223,7 @@ y_{it} &= \param{\alpha} + \unitfx{\mu_{i}}
 ## Conclusion
 
 So that's it.
-Our solution meaningfully improves the color experience in $\latex$ using just five lines of code: one to create a helper function and four more to create some color mappings.
+Our solution meaningfully improves the color experience in LaTeX using just five lines of code: one to create a helper function and four more to create some color mappings.
 The helper function let us change the interface to color control in the _general case_.
 And the color mappings let us apply the new interface to create simple key-value pairs that map a semantic to a color.
 And bonus: the interface is also safer because managing the scope of a color modification requires no more work for the user.
@@ -231,5 +232,5 @@ We also do this without introducing any dependencies.
 We could still load outside packages to access more color values, but that choice doesn't bear on the general interface or vice-versa.
 That modularity is a good design feature.
 
-And all because we thought about a $\latex$ problem like a programming problem.
+And all because we thought about a LaTeX problem like a programming problem.
 
